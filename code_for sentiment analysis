@@ -1,0 +1,93 @@
+pip install nltk
+
+
+import nltk
+s="the product is not good"
+listing = nltk.word_tokenize(s)
+print(listing)
+
+# output : ['the', 'product', 'is', 'not', 'good']
+
+nltk.pos_tag(listing)
+# output : [('the', 'DT'),
+ ('product', 'NN'),
+ ('is', 'VBZ'),
+ ('not', 'RB'),
+ ('good', 'JJ')]
+
+nltk.download()
+# output : True
+
+# Using VADER ( valence aware dictionary and sentiment reasoner )
+
+from nltk.sentiment import SentimentIntensityAnalyzer
+
+from tqdm.notebook import tqdm
+
+import numpy as np
+
+import pandas as pd
+
+import matplotlib.pyplot as plt
+
+sentiment = SentimentIntensityAnalyzer()
+
+print(sentiment.polarity_scores("the product is so nice"))
+# output : {'neg': 0.0, 'neu': 0.525, 'pos': 0.475, 'compound': 0.5598}
+
+df = pd.read_csv("Reviews.csv")
+
+df['Score'].value_counts().sort_index().plot(kind = 'bar',figsize=(15,5))
+
+dd = df['Text'][5]
+print(dd)
+
+print(sentiment.polarity_scores(dd))      #output : {'neg': 0.029, 'neu': 0.809, 'pos': 0.163, 'compound': 0.883}
+
+df1 = df.head(500)
+
+res={}
+for i , row in tqdm(df1.iterrows(),total=len(df1)):
+    text = row['Text']
+    myid = row['Id']
+    res[myid] = sentiment.polarity_scores(text)
+print(res)
+
+## output : 
+{1: {'neg': 0.0, 'neu': 0.695, 'pos': 0.305, 'compound': 0.9441},
+ 2: {'neg': 0.138, 'neu': 0.862, 'pos': 0.0, 'compound': -0.5664},
+ 3: {'neg': 0.091, 'neu': 0.754, 'pos': 0.155, 'compound': 0.8265},
+ 4: {'neg': 0.0, 'neu': 1.0, 'pos': 0.0, 'compound': 0.0},
+ 5: {'neg': 0.0, 'neu': 0.552, 'pos': 0.448, 'compound': 0.9468},
+ 6: {'neg': 0.029, 'neu': 0.809, 'pos': 0.163, 'compound': 0.883}}
+
+vad = pd.DataFrame(res).T
+
+vad = vad.reset_index().rename(columns = {'index':'Id'})
+vad = vad.merge(df1,how = 'left')
+
+
+print(vad)
+
+# output : Id	neg	neu	pos	compound	ProductId	UserId	ProfileName	HelpfulnessNumerator	HelpfulnessDenominator	Score	Time	Summary	Text
+0	1	0.000	0.695	0.305	0.9441	B001E4KFG0	A3SGXH7AUHU8GW	delmartian	1	1	5	1303862400	Good Quality Dog Food	I have bought several of the Vitality canned
+
+import seaborn as sns
+
+sns.barplot(data = vad , x='Score',y='compound')
+
+fig , axs = plt.subplots(1,3,figsize=(12,3))
+sns.barplot(data = vad , x='Score',y='pos',ax=axs[0])
+sns.barplot(data = vad , x='Score',y='neu',ax=axs[1])
+sns.barplot(data = vad , x='Score',y='neg',ax=axs[2])
+axs[0].set_title("the score vs positive values")
+axs[1].set_title("the score vs neutral values")
+axs[2].set_title("the score vs negative values")
+
+
+
+
+
+
+
+
